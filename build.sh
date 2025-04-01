@@ -14,6 +14,6 @@ for TARGET in "manylinux2014_x86_64" "macosx_11_0_arm64"; do
     cp -r ../ray/python ray/python
 
     zip -r ray-wheel.zip *
-    mv ray-wheel.zip ../wheels/ray_medal-1.0.0-cp312-cp312-${TARGET}.whl
+    mv ray-wheel.zip ../wheels/ray-1.0.0-cp312-cp312-${TARGET}.whl
     cd ..
 done
