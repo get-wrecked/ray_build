@@ -8,17 +8,6 @@ on:
 jobs:
   build-patched-wheels:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: x86_64
-            name: manylinux2014_x86_64
-          - os: macos-14
-            platform: macos
-            arch: arm64
-            name: macosx_11_0_arm64
     
     steps:
       - name: Checkout code
@@ -27,26 +16,8 @@ jobs:
           fetch-depth: 0
           submodules: true
       
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      
-      - name: Install nightly ray
-        run: |
-          mkdir wheel_tmp
-          cd wheel_tmp
-
-          wget "https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp312-cp312-${{ matrix.name }}.whl"
-          mv ray-3.0.0.dev0-cp312-cp312-${{ matrix.name }}.whl ray-wheel.zip
-          unzip ray-wheel.zip
-          rm ray-wheel.zip
-
-          rm -rf ray/python
-          cp -r ../ray/python ray/python
-
-          zip -r ray-wheel.zip *
-          mv ray-wheel.zip ray-medal.whl
+      - name: Build
+        run: ./build.sh
 
       - name: Create Release
         id: create_release
@@ -65,12 +36,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: wheel_tmp/ray-medal.whl
-          asset_name: ray_medal-${{ github.ref_name }}-cp312-cp312-${{ matrix.name }}.whl
+          asset_path: wheels/ray_medal-dev-cp312-cp312-manylinux2014_x86_64.whl
+          asset_name: ray_medal-dev-cp312-cp312-manylinux2014_x86_64.whl
           asset_content_type: application/zip
-
-      # - name: Upload patched wheels as artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ray-medal-wheel.whl
-      #     path: wheel_tmp/ray-medal.whl
+      - name: Upload Release Asset2
+        id: upload-release-asset2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: wheels/ray_medal-dev-cp312-cp312-macosx_11_0_arm64.whl
+          asset_name: ray_medal-dev-cp312-cp312-macosx_11_0_arm64.whl
+          asset_content_type: application/zip
